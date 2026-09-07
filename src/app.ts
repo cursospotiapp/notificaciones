@@ -1,14 +1,21 @@
-import { winstonLogger } from '@cursospotiapp/jobber-share';
-import { Logger } from 'winston';
-import { config } from '@notifications/config';
 import express, { Express } from 'express';
-import { start } from '@notifications/server';
+import { Logger } from 'winston';
 
-const log: Logger = winstonLogger(`${config.ELASTIC_SEARCH_URL}`, 'notificationApp', 'debug');
+import { createLogger } from '@notifications/logger';
+import { shutdown, start } from '@notifications/server';
+
+const log: Logger = createLogger('app');
 
 function initialize(): void {
   const app: Express = express();
   start(app);
-  log.info('Notification Service Initialized');
+  log.info('Servicio de notificaciones iniciado.');
 }
+
+for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+  process.once(signal, () => {
+    void shutdown().then(() => process.exit(0));
+  });
+}
+
 initialize();

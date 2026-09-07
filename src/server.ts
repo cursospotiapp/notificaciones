@@ -1,44 +1,77 @@
 import 'express-async-errors';
 import http from 'http';
 
-import { winstonLogger } from '@cursospotiapp/jobber-share';
-import { Logger } from 'winston';
-import { config } from '@notifications/config';
 import { Application } from 'express';
-import { healthRoutes } from '@notifications/routes';
-import { checkConnection } from '@notifications/elasticsearch';
-import { createConnection } from '@notifications/queues/connection';
-import { Channel } from 'amqplib';
-import { consumeAuthEmailMessages, consumeOrderEmailMessages } from '@notifications/queues/email.consumer';
+import { Logger } from 'winston';
 
-const SERVER_PORT = 4001;
-const log: Logger = winstonLogger(`${config.ELASTIC_SEARCH_URL}`, 'notificationServer', 'debug');
+import { config } from '@notifications/config';
+import { checkConnection, isElasticsearchReady } from '@notifications/elasticsearch';
+import { createLogger } from '@notifications/logger';
+import { healthRoutes } from '@notifications/routes';
+import { closeConnection, createConnection, getChannel } from '@notifications/queues/connection';
+import { consumeNotifications } from '@notifications/queues/consumer';
+import { DEAD_LETTER_QUEUE } from '@notifications/queues/topology';
+
+const log: Logger = createLogger('server');
+
+let httpServer: http.Server | undefined;
 
 export function start(app: Application): void {
-  startServer(app);
-  app.use('', healthRoutes());
-  startQueues();
+  httpServer = startHttpServer(app);
+  app.use('', healthRoutes(checkReadiness));
+  void startQueues();
   startElasticSearch();
 }
 
+async function checkReadiness(): Promise<Record<string, string>> {
+  const dependencias: Record<string, string> = {};
+  const channel = getChannel();
+  if (!channel) {
+    throw new Error('rabbitmq: sin conexion');
+  }
+  await channel.checkQueue(DEAD_LETTER_QUEUE);
+  dependencias.rabbitmq = 'ok';
+  if (config.ELASTICSEARCH_ENABLED) {
+    dependencias.elasticsearch = (await isElasticsearchReady()) ? 'ok' : 'no disponible';
+  }
+  return dependencias;
+}
+
 async function startQueues(): Promise<void> {
-  const emailChannel: Channel = (await createConnection()) as Channel;
-  await consumeAuthEmailMessages(emailChannel);
-  await consumeOrderEmailMessages(emailChannel);
+  const connection = await createConnection();
+  if (!connection) {
+    log.error('RabbitMQ no disponible; reintentando en 5 s...');
+    setTimeout(() => {
+      void startQueues();
+    }, 5000);
+    return;
+  }
+  await consumeNotifications(connection.channel);
 }
 
 function startElasticSearch(): void {
-  checkConnection();
+  if (!config.ELASTICSEARCH_ENABLED) {
+    log.info('Elasticsearch desactivado (ELASTICSEARCH_ENABLED=0); los logs salen por consola.');
+    return;
+  }
+  void checkConnection();
 }
 
-function startServer(app: Application): void {
-  try {
-    const httpServer: http.Server = new http.Server(app);
-    log.info(`Worker with process id of ${process.pid} on notification server has started`);
-    httpServer.listen(SERVER_PORT, () => {
-      log.info(`Notification server running on port ${SERVER_PORT}`);
-    });
-  } catch (error) {
-    log.log('error', 'NotificationService startServer() method:', error);
+function startHttpServer(app: Application): http.Server {
+  const server: http.Server = new http.Server(app);
+  server.listen(config.PORT, () => {
+    log.info(`Servicio de notificaciones escuchando en el puerto ${config.PORT} (pid ${process.pid}).`);
+  });
+  return server;
+}
+
+export async function shutdown(): Promise<void> {
+  log.info('Apagando el servicio...');
+  await closeConnection();
+  const server = httpServer;
+  if (server) {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
   }
+  httpServer = undefined;
+  log.info('Servicio detenido.');
 }

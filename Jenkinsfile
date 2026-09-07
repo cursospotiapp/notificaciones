@@ -1,6 +1,6 @@
 namespace = "production"
-serviceName = "jobber-notification"
-service = "Jobber Notification"
+serviceName = "notificaciones"
+service = "Servicio de Notificaciones"
 
 def groovyMethods
 
@@ -18,7 +18,7 @@ pipeline {
 
   environment {
     DOCKER_CREDENTIALS = credentials("dockerhub")
-    IMAGE_NAME = "uzochukwueddie" + "/" + "jobber-notification"
+    IMAGE_NAME = "tu-usuario-dockerhub" + "/" + "notificaciones"
     IMAGE_TAG = "stable-${BUILD_NUMBER}"
   }
 
@@ -39,8 +39,7 @@ pipeline {
             groovyMethods = load("functions.groovy")
           }
         }
-        // Add your notification github url to url field
-        git branch: 'main', credentialsId: 'github', url: ''
+        git branch: 'main', credentialsId: 'github', url: 'https://github.com/cursospotiapp/notificaciones.git'
         sh 'npm install'
       }
     }
@@ -103,7 +102,7 @@ pipeline {
         m2 = System.currentTimeMillis()
         def durTime = groovyMethods.durationTime(m1, m2)
         def author = groovyMethods.readCommitAuthor()
-        groovyMethods.notifySlack("", "jobber-jenkins", [
+        groovyMethods.notifySlack("", "notificaciones-jenkins", [
         				[
         					title: "BUILD SUCCEEDED: ${service} Service with build number ${env.BUILD_NUMBER}",
         					title_link: "${env.BUILD_URL}",
@@ -132,7 +131,7 @@ pipeline {
         m2 = System.currentTimeMillis()
         def durTime = groovyMethods.durationTime(m1, m2)
         def author = groovyMethods.readCommitAuthor()
-        groovyMethods.notifySlack("", "jobber-jenkins", [
+        groovyMethods.notifySlack("", "notificaciones-jenkins", [
         				[
         					title: "BUILD FAILED: ${service} Service with build number ${env.BUILD_NUMBER}",
         					title_link: "${env.BUILD_URL}",

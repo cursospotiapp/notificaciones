@@ -1,28 +1,51 @@
-import { config } from '@notifications/config';
-import { winstonLogger } from '@cursospotiapp/jobber-share';
 import client, { Channel, Connection } from 'amqplib';
 import { Logger } from 'winston';
 
-const log: Logger = winstonLogger(`${config.ELASTIC_SEARCH_URL}`, 'notificationQueueConnection', 'debug');
+import { config } from '@notifications/config';
+import { createLogger } from '@notifications/logger';
 
-async function createConnection(): Promise<Channel | undefined> {
+const log: Logger = createLogger('queueConnection');
+
+export interface QueueConnection {
+  connection: Connection;
+  channel: Channel;
+}
+
+let active: QueueConnection | undefined;
+
+async function createConnection(): Promise<QueueConnection | undefined> {
   try {
-    const connection: Connection = await client.connect(`${config.RABBITMQ_ENDPOINT}`);
+    const connection: Connection = await client.connect(config.RABBITMQ_URL);
     const channel: Channel = await connection.createChannel();
-    log.info('Notification server connected to queue successfully...');
-    closeConnection(channel, connection);
-    return channel;
+    await channel.prefetch(config.PREFETCH_COUNT);
+    active = { connection, channel };
+    log.info('Conectado a RabbitMQ.');
+    return active;
   } catch (error) {
-    log.log('error', 'NotificationService error createConnection() method:', error);
+    log.error('No se pudo conectar a RabbitMQ:', error);
     return undefined;
   }
 }
 
-function closeConnection(channel: Channel, connection: Connection): void {
-  process.once('SIGINT', async () => {
-    await channel.close();
-    await connection.close();
-  });
+function getChannel(): Channel | undefined {
+  return active?.channel;
 }
 
-export { createConnection };
+async function closeConnection(): Promise<void> {
+  if (!active) {
+    return;
+  }
+  try {
+    await active.channel.close();
+  } catch (error) {
+    log.error('Error al cerrar el canal RabbitMQ:', error);
+  }
+  try {
+    await active.connection.close();
+  } catch (error) {
+    log.error('Error al cerrar la conexion RabbitMQ:', error);
+  }
+  active = undefined;
+}
+
+export { createConnection, getChannel, closeConnection };
