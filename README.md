@@ -28,60 +28,11 @@ El productor nunca espera respuesta y nunca conoce el canal de salida. El contra
 
 ## Arquitectura
 
-```mermaid
-flowchart TB
-    subgraph PROD["Servicios productores"]
-        P1["Autenticación"]
-        P2["Pedidos"]
-        P3["Pagos · Envíos · Cualquier servicio"]
-    end
+<div align="center">
 
-    subgraph BUS["RabbitMQ"]
-        EX{{"exchange notifications (topic)"}}
-        QE[("notifications.email")]
-        QW[("notifications.webhook")]
-        DLQ[("notifications.dlq · fallidos")]
-    end
+![Diagrama de arquitectura](docs/arquitectura.svg)
 
-    subgraph SVC["Servicio de notificaciones"]
-        C1["Consumidor email"]
-        C2["Consumidor webhook"]
-        D{"Despachador por canal"}
-        R[("reintentos con TTL")]
-    end
-
-    subgraph OUT["Salidas"]
-        MAIL["SMTP · correo con plantilla EJS"]
-        HOOK["HTTP · POST JSON a webhooks"]
-        FUT["SMS · push · FTP · ..."]
-    end
-
-    ES[("Elasticsearch · solo logs, opcional")]
-
-    P1 & P2 & P3 -->|"notification.email<br/>notification.webhook"| EX
-    EX --> QE & QW
-    QE --> C1
-    QW --> C2
-    C1 & C2 --> D
-    D -->|"canal email"| MAIL
-    D -->|"canal webhook"| HOOK
-    D -.->|"canales futuros"| FUT
-    C1 & C2 -->|"fallo transitorio"| R
-    R -.->|"tras RETRY_DELAY_MS"| EX
-    C1 & C2 -->|"sin reintentos"| DLQ
-    C1 & C2 & D -.->|"logs"| ES
-
-    classDef prod fill:#E3F2FD,stroke:#1565C0,color:#0D47A1;
-    classDef bus fill:#FFF3E0,stroke:#EF6C00,color:#4E342E;
-    classDef svc fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20;
-    classDef out fill:#F3E5F5,stroke:#6A1B9A,color:#4A148C;
-    classDef obs fill:#FAFAFA,stroke:#9E9E9E,color:#424242,stroke-dasharray: 5 5;
-    class P1,P2,P3 prod;
-    class EX,QE,QW,DLQ bus;
-    class C1,C2,D,R svc;
-    class MAIL,HOOK,FUT out;
-    class ES obs;
-```
+</div>
 
 Cada pieza es **ortogonal**: el productor solo conoce el sobre JSON; el consumidor solo conoce la topología de colas; el despachador solo conoce los canales; y cada canal solo conoce su protocolo de salida. Añadir un canal nuevo no toca ni productores ni colas (ver [Canales](#canales)).
 
