@@ -148,5 +148,11 @@ dist
 
 # keys files
 clave.key
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*
+*secret*
 
 # End of https://www.toptal.com/developers/gitignore/api/node
