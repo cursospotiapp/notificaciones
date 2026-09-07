@@ -1,143 +1,145 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="820" viewBox="0 0 1480 820" font-family="'Segoe UI', system-ui, -apple-system, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="960" viewBox="0 0 1600 960" role="img" aria-labelledby="title description">
+  <title id="title">Arquitectura del sistema de notificaciones</title>
+  <desc id="description">Los productores publican eventos en RabbitMQ. Las colas email y webhook alimentan consumidores que validan el contrato y comprueban la idempotencia antes de despachar a SMTP o HTTP. Los fallos transitorios vuelven al exchange tras un TTL; los errores definitivos terminan en la DLQ. Elasticsearch recibe logs opcionalmente.</desc>
   <defs>
-    <marker id="flecha" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#546E7A"/>
-    </marker>
-    <marker id="flecha-naranja" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#EF6C00"/>
-    </marker>
-    <marker id="flecha-roja" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#C62828"/>
-    </marker>
-    <marker id="flecha-gris" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#9E9E9E"/>
-    </marker>
+    <style>
+      text { font-family: 'Segoe UI', Arial, sans-serif; fill: #182840; }
+      .label { font-size: 17px; font-weight: 600; }
+      .small { font-size: 14px; fill: #53647b; }
+      .mono { font-family: Consolas, monospace; font-size: 14px; }
+      .edge { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+    </style>
+    <filter id="shadow" x="-10%" y="-20%" width="120%" height="150%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#152c4c" flood-opacity="0.06"/></filter>
   </defs>
-
-  <!-- Fondo -->
-  <rect x="0" y="0" width="1480" height="820" rx="16" fill="#FFFFFF" stroke="#E0E0E0" stroke-width="2"/>
-
-  <!-- Título -->
-  <text x="740" y="44" text-anchor="middle" font-size="24" font-weight="700" fill="#212121">Arquitectura del sistema de notificaciones</text>
-
-  <!-- Carriles -->
-  <rect x="24" y="64" width="220" height="560" rx="12" fill="#E3F2FD" stroke="#0D47A1" stroke-opacity="0.35" stroke-width="2"/>
-  <rect x="292" y="64" width="300" height="560" rx="12" fill="#FFF4E5" stroke="#E65100" stroke-opacity="0.35" stroke-width="2"/>
-  <rect x="600" y="64" width="480" height="560" rx="12" fill="#E9F5E9" stroke="#1B5E20" stroke-opacity="0.35" stroke-width="2"/>
-  <rect x="1128" y="64" width="328" height="560" rx="12" fill="#F4ECF7" stroke="#4A148C" stroke-opacity="0.35" stroke-width="2"/>
-
-  <text x="134" y="90" text-anchor="middle" font-size="15" font-weight="700" fill="#0D47A1">Productores</text>
-  <text x="134" y="108" text-anchor="middle" font-size="11" fill="#616161">publican eventos</text>
-  <text x="442" y="96" text-anchor="middle" font-size="15" font-weight="700" fill="#E65100">RabbitMQ</text>
-  <text x="840" y="90" text-anchor="middle" font-size="15" font-weight="700" fill="#1B5E20">Servicio de notificaciones</text>
-  <text x="840" y="108" text-anchor="middle" font-size="11" fill="#616161">consume · despacha · entrega</text>
-  <text x="1292" y="90" text-anchor="middle" font-size="15" font-weight="700" fill="#4A148C">Salidas</text>
-  <text x="1292" y="108" text-anchor="middle" font-size="11" fill="#616161">destinos finales</text>
-
-  <!-- Productores -->
-  <g>
-    <rect x="36" y="120" width="196" height="56" rx="8" fill="#FFFFFF" stroke="#1565C0" stroke-width="2"/>
-    <text x="134" y="154" text-anchor="middle" font-size="14" fill="#212121">Autenticación</text>
-    <rect x="36" y="200" width="196" height="56" rx="8" fill="#FFFFFF" stroke="#1565C0" stroke-width="2"/>
-    <text x="134" y="234" text-anchor="middle" font-size="14" fill="#212121">Pedidos</text>
-    <rect x="36" y="280" width="196" height="56" rx="8" fill="#FFFFFF" stroke="#1565C0" stroke-width="2"/>
-    <text x="134" y="314" text-anchor="middle" font-size="14" fill="#212121">Pagos · Envíos · …</text>
-  </g>
-
-  <!-- RabbitMQ -->
-  <g>
-    <rect x="340" y="120" width="204" height="64" rx="8" fill="#FFFFFF" stroke="#EF6C00" stroke-width="2"/>
-    <text x="442" y="147" text-anchor="middle" font-size="14" font-weight="700" fill="#212121">exchange notifications</text>
-    <text x="442" y="166" text-anchor="middle" font-size="12" fill="#616161">tipo topic</text>
-    <rect x="340" y="230" width="228" height="60" rx="8" fill="#FFFFFF" stroke="#EF6C00" stroke-width="2"/>
-    <text x="454" y="254" text-anchor="middle" font-size="13" font-weight="700" fill="#212121">notifications.email</text>
-    <text x="454" y="272" text-anchor="middle" font-size="11" fill="#616161">routing: notification.email</text>
-    <rect x="340" y="310" width="228" height="60" rx="8" fill="#FFFFFF" stroke="#EF6C00" stroke-width="2"/>
-    <text x="454" y="334" text-anchor="middle" font-size="13" font-weight="700" fill="#212121">notifications.webhook</text>
-    <text x="454" y="352" text-anchor="middle" font-size="11" fill="#616161">routing: notification.webhook</text>
-  </g>
-
-  <!-- Servicio -->
-  <g>
-    <rect x="608" y="230" width="280" height="60" rx="8" fill="#FFFFFF" stroke="#2E7D32" stroke-width="2"/>
-    <text x="748" y="254" text-anchor="middle" font-size="14" font-weight="700" fill="#212121">Consumidor email</text>
-    <text x="748" y="272" text-anchor="middle" font-size="11" fill="#616161">consume notifications.email</text>
-    <rect x="608" y="310" width="280" height="60" rx="8" fill="#FFFFFF" stroke="#2E7D32" stroke-width="2"/>
-    <text x="748" y="334" text-anchor="middle" font-size="14" font-weight="700" fill="#212121">Consumidor webhook</text>
-    <text x="748" y="352" text-anchor="middle" font-size="11" fill="#616161">consume notifications.webhook</text>
-    <rect x="608" y="430" width="280" height="60" rx="8" fill="#FFFFFF" stroke="#2E7D32" stroke-width="2.5"/>
-    <text x="748" y="465" text-anchor="middle" font-size="15" font-weight="700" fill="#212121">Despachador por canal</text>
-  </g>
-
-  <!-- Salidas -->
-  <g>
-    <rect x="1140" y="180" width="304" height="70" rx="8" fill="#FFFFFF" stroke="#7B1FA2" stroke-width="2"/>
-    <text x="1292" y="209" text-anchor="middle" font-size="14" font-weight="700" fill="#212121">Correo SMTP</text>
-    <text x="1292" y="229" text-anchor="middle" font-size="12" fill="#616161">plantilla EJS</text>
-    <rect x="1140" y="290" width="304" height="70" rx="8" fill="#FFFFFF" stroke="#7B1FA2" stroke-width="2"/>
-    <text x="1292" y="319" text-anchor="middle" font-size="14" font-weight="700" fill="#212121">Webhook HTTP</text>
-    <text x="1292" y="339" text-anchor="middle" font-size="12" fill="#616161">POST JSON</text>
-    <rect x="1140" y="400" width="304" height="70" rx="8" fill="#FFFFFF" stroke="#7B1FA2" stroke-width="2" stroke-dasharray="7 5"/>
-    <text x="1292" y="429" text-anchor="middle" font-size="14" font-weight="700" fill="#212121">Canales futuros</text>
-    <text x="1292" y="449" text-anchor="middle" font-size="12" fill="#616161">SMS · push · FTP · …</text>
-  </g>
-
-  <!-- Fila inferior: reintentos, fallidos, observabilidad -->
-  <g>
-    <rect x="292" y="658" width="300" height="56" rx="8" fill="#FFFFFF" stroke="#EF6C00" stroke-width="2" stroke-dasharray="7 5"/>
-    <text x="442" y="681" text-anchor="middle" font-size="13" font-weight="700" fill="#212121">Reintentos con TTL</text>
-    <text x="442" y="699" text-anchor="middle" font-size="11" fill="#616161">vuelve solo tras RETRY_DELAY_MS</text>
-    <rect x="640" y="658" width="300" height="56" rx="8" fill="#FFFFFF" stroke="#C62828" stroke-width="2"/>
-    <text x="790" y="681" text-anchor="middle" font-size="13" font-weight="700" fill="#212121">notifications.dlq · fallidos</text>
-    <text x="790" y="699" text-anchor="middle" font-size="11" fill="#616161">contrato inválido · reintentos agotados</text>
-    <rect x="988" y="658" width="300" height="56" rx="8" fill="#FFFFFF" stroke="#757575" stroke-width="2" stroke-dasharray="7 5"/>
-    <text x="1138" y="681" text-anchor="middle" font-size="13" font-weight="700" fill="#212121">Elasticsearch</text>
-    <text x="1138" y="699" text-anchor="middle" font-size="11" fill="#616161">solo logs · opcional</text>
-  </g>
-
-  <!-- Flujo principal -->
-  <g stroke="#546E7A" stroke-width="2" fill="none">
-    <path d="M232,148 H256 M232,228 H256 M232,308 H256 M256,148 V308 M256,152 H340" marker-end="url(#flecha)"/>
-    <path d="M454,184 V205 H316 V340 M316,260 H340 M316,340 H340" marker-end="url(#flecha)"/>
-    <path d="M568,260 H608" marker-end="url(#flecha)"/>
-    <path d="M568,340 H608" marker-end="url(#flecha)"/>
-    <path d="M700,290 V430" marker-end="url(#flecha)"/>
-    <path d="M800,370 V430" marker-end="url(#flecha)"/>
-    <path d="M888,460 H1000 M1000,215 V435 M1000,215 H1140 M1000,325 H1140 M1000,435 H1140" marker-end="url(#flecha)"/>
-  </g>
-  <text x="1070" y="207" text-anchor="middle" font-size="12" fill="#37474F">email</text>
-  <text x="1070" y="317" text-anchor="middle" font-size="12" fill="#37474F">webhook</text>
-  <text x="1070" y="427" text-anchor="middle" font-size="12" fill="#37474F">futuros</text>
-
-  <!-- Reintento -->
-  <g stroke="#EF6C00" stroke-width="2" fill="none">
-    <path d="M700,490 V600 H442 V658" marker-end="url(#flecha-naranja)"/>
-    <path d="M442,714 V724 H270 V158 M270,146 V104 H450 V120" marker-end="url(#flecha-naranja)"/>
-  </g>
-  <text x="571" y="592" text-anchor="middle" font-size="12" fill="#9C4D00">fallo transitorio · reintento N/M</text>
-  <text transform="translate(282,419) rotate(-90)" text-anchor="middle" font-size="12" fill="#9C4D00">tras RETRY_DELAY_MS</text>
-
-  <!-- Fallidos -->
-  <g stroke="#C62828" stroke-width="2" fill="none">
-    <path d="M800,490 V658" marker-end="url(#flecha-roja)"/>
-  </g>
-  <text transform="translate(790,574) rotate(-90)" text-anchor="middle" font-size="12" fill="#C62828">sin reintentos</text>
-
-  <!-- Logs -->
-  <g stroke="#9E9E9E" stroke-width="2" fill="none" stroke-dasharray="2 5" stroke-linecap="round">
-    <path d="M870,490 V600 H1138 V658" marker-end="url(#flecha-gris)"/>
-  </g>
-  <text x="1004" y="592" text-anchor="middle" font-size="12" fill="#616161">logs</text>
-
-  <!-- Leyenda -->
-  <g font-size="13" fill="#424242">
-    <line x1="60" y1="775" x2="110" y2="775" stroke="#546E7A" stroke-width="2" marker-end="url(#flecha)"/>
-    <text x="120" y="780">flujo principal</text>
-    <line x1="300" y1="775" x2="350" y2="775" stroke="#EF6C00" stroke-width="2" marker-end="url(#flecha-naranja)"/>
-    <text x="360" y="780">reintento</text>
-    <line x1="500" y1="775" x2="550" y2="775" stroke="#C62828" stroke-width="2" marker-end="url(#flecha-roja)"/>
-    <text x="560" y="780">fallidos</text>
-    <line x1="700" y1="775" x2="750" y2="775" stroke="#9E9E9E" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round" marker-end="url(#flecha-gris)"/>
-    <text x="760" y="780">logs</text>
-  </g>
+<defs><marker id="main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#607491" stroke-width="1.6"/></marker></defs>
+<defs><marker id="retry" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#b66a0c" stroke-width="1.6"/></marker></defs>
+<defs><marker id="fail" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#c34a61" stroke-width="1.6"/></marker></defs>
+<defs><marker id="logs" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#7c8798" stroke-width="1.6"/></marker></defs>
+<rect x="0" y="0" width="1600" height="960" rx="24" fill="#f7f9fc" stroke="none" />
+<rect x="40" y="40" width="5" height="65" rx="2" fill="#5263d6" stroke="none" />
+<text x="64" y="55" class="" font-size="12" style="fill:#5263d6" font-weight="700" letter-spacing="2">ARQUITECTURA / EVENT-DRIVEN</text>
+<text x="64" y="94" class="" font-size="34" font-weight="700">Una notificación. Múltiples destinos.</text>
+<text x="64" y="126" class="" font-size="17" style="fill:#53647b" >Publicación asíncrona · Despacho por canal · Recuperación ante fallos</text>
+<rect x="1320" y="52" width="232" height="36" rx="18" fill="#e9eef8" stroke="none" />
+<text x="1436" y="76" class="" font-size="12" style="fill:#44567a" text-anchor="middle" letter-spacing="2" font-weight="700">NOTIFICACIONES</text>
+<rect x="40" y="166" width="260" height="474" rx="18" fill="#edf3fd" stroke="none" />
+<rect x="60" y="184" width="32" height="30" rx="9" fill="#ffffff" stroke="none" />
+<text x="76" y="205" class="" font-size="13" style="fill:#3d6bc0" text-anchor="middle" font-weight="700">01</text>
+<text x="104" y="205" class="label" style="fill:#3d6bc0" >Productores</text>
+<text x="60" y="240" class="small" >Publican eventos</text>
+<rect x="350" y="166" width="310" height="474" rx="18" fill="#fff6e9" stroke="none" />
+<rect x="370" y="184" width="32" height="30" rx="9" fill="#ffffff" stroke="none" />
+<text x="386" y="205" class="" font-size="13" style="fill:#ad6a13" text-anchor="middle" font-weight="700">02</text>
+<text x="414" y="205" class="label" style="fill:#ad6a13" >RabbitMQ</text>
+<text x="370" y="240" class="small" >Enruta y almacena</text>
+<rect x="690" y="166" width="500" height="474" rx="18" fill="#eaf6f2" stroke="none" />
+<rect x="710" y="184" width="32" height="30" rx="9" fill="#ffffff" stroke="none" />
+<text x="726" y="205" class="" font-size="13" style="fill:#247b65" text-anchor="middle" font-weight="700">03</text>
+<text x="754" y="205" class="label" style="fill:#247b65" >Servicio de notificaciones</text>
+<text x="710" y="240" class="small" >Consume, valida y despacha</text>
+<rect x="1220" y="166" width="340" height="474" rx="18" fill="#f2effb" stroke="none" />
+<rect x="1240" y="184" width="32" height="30" rx="9" fill="#ffffff" stroke="none" />
+<text x="1256" y="205" class="" font-size="13" style="fill:#7960b5" text-anchor="middle" font-weight="700">04</text>
+<text x="1284" y="205" class="label" style="fill:#7960b5" >Salidas</text>
+<text x="1240" y="240" class="small" >Entrega por protocolo</text>
+<path class="edge" d="M280 310 H316 M280 410 H316 M280 510 H316 M316 310 V510" stroke="#607491"/>
+<path class="edge" d="M316 310 H370" stroke="#607491" marker-end="url(#main)"/>
+<path class="edge" d="M505 352 V363 H360 V510" stroke="#607491"/>
+<path class="edge" d="M360 410 H380" stroke="#607491" marker-end="url(#main)"/>
+<path class="edge" d="M360 510 H380" stroke="#607491" marker-end="url(#main)"/>
+<path class="edge" d="M640 410 H710" stroke="#607491" marker-end="url(#main)"/>
+<path class="edge" d="M640 510 H710" stroke="#607491" marker-end="url(#main)"/>
+<path class="edge" d="M940 410 H963 V460 H995" stroke="#607491" marker-end="url(#main)"/>
+<path class="edge" d="M940 510 H963 V460" stroke="#607491"/>
+<path class="edge" d="M1170 460 H1204 V310" stroke="#607491"/>
+<path class="edge" d="M1204 310 H1240" stroke="#607491" marker-end="url(#main)"/>
+<path class="edge" d="M1204 410 H1240" stroke="#607491" marker-end="url(#main)"/>
+<path class="edge" d="M1204 460 V510 H1240" stroke="#607491" marker-end="url(#main)" stroke-dasharray="5 6"/>
+<rect x="60" y="274" width="220" height="76" rx="12" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)"/>
+<rect x="76" y="293" width="4" height="22" rx="2" fill="#3d6bc0" stroke="none" />
+<text x="92" y="308" class="label" >Autenticación</text>
+<text x="92" y="331" class="small" >Altas y recuperación</text>
+<rect x="60" y="374" width="220" height="76" rx="12" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)"/>
+<rect x="76" y="393" width="4" height="22" rx="2" fill="#3d6bc0" stroke="none" />
+<text x="92" y="408" class="label" >Pedidos</text>
+<text x="92" y="431" class="small" >Estado de la compra</text>
+<rect x="60" y="474" width="220" height="76" rx="12" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)"/>
+<rect x="76" y="493" width="4" height="22" rx="2" fill="#3d6bc0" stroke="none" />
+<text x="92" y="508" class="label" >Pagos · Envíos · …</text>
+<text x="92" y="531" class="small" >Cualquier productor</text>
+<rect x="370" y="274" width="270" height="78" rx="12" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)"/>
+<rect x="386" y="293" width="4" height="22" rx="2" fill="#ad6a13" stroke="none" />
+<text x="402" y="308" class="label" >notifications</text>
+<text x="402" y="331" class="small" >Exchange · tipo topic</text>
+<rect x="380" y="374" width="260" height="76" rx="12" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)"/>
+<rect x="396" y="393" width="4" height="22" rx="2" fill="#ad6a13" stroke="none" />
+<text x="412" y="408" class="label" >notifications.email</text>
+<text x="412" y="431" class="small" >routing: notification.email</text>
+<rect x="380" y="474" width="260" height="76" rx="12" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)"/>
+<rect x="396" y="493" width="4" height="22" rx="2" fill="#ad6a13" stroke="none" />
+<text x="412" y="508" class="label" >notifications.webhook</text>
+<text x="412" y="531" class="small" >routing: notification.webhook</text>
+<rect x="710" y="374" width="230" height="76" rx="12" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)"/>
+<rect x="726" y="393" width="4" height="22" rx="2" fill="#247b65" stroke="none" />
+<text x="742" y="408" class="label" >Consumidor email</text>
+<text x="742" y="431" class="small" >consume la cola email</text>
+<rect x="710" y="474" width="230" height="76" rx="12" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)"/>
+<rect x="726" y="493" width="4" height="22" rx="2" fill="#247b65" stroke="none" />
+<text x="742" y="508" class="label" >Consumidor webhook</text>
+<text x="742" y="531" class="small" >consume la cola webhook</text>
+<rect x="995" y="406" width="175" height="108" rx="14" fill="#247b65" stroke="none" />
+<text x="1082" y="439" class="label" style="fill:#ffffff" text-anchor="middle">Despachador</text>
+<text x="1082" y="462" class="label" style="fill:#ffffff" text-anchor="middle">por canal</text>
+<text x="1082" y="491" class="" font-size="13" style="fill:#d5f0e7" text-anchor="middle">email / webhook</text>
+<text x="714" y="307" class="" font-size="12" style="fill:#247b65" font-weight="700" letter-spacing="1">CONTRATO + IDEMPOTENCIA</text>
+<text x="714" y="332" class="small" >Validar el sobre · Evitar duplicados</text>
+<rect x="1240" y="274" width="300" height="76" rx="12" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)"/>
+<rect x="1256" y="293" width="4" height="22" rx="2" fill="#7960b5" stroke="none" />
+<text x="1272" y="308" class="label" >Correo SMTP</text>
+<text x="1272" y="331" class="small" >Plantillas EJS</text>
+<rect x="1240" y="374" width="300" height="76" rx="12" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)"/>
+<rect x="1256" y="393" width="4" height="22" rx="2" fill="#7960b5" stroke="none" />
+<text x="1272" y="408" class="label" >Webhook HTTP</text>
+<text x="1272" y="431" class="small" >POST JSON</text>
+<rect x="1240" y="474" width="300" height="76" rx="12" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)" stroke-dasharray="5 5"/>
+<rect x="1256" y="493" width="4" height="22" rx="2" fill="#7960b5" stroke="none" />
+<text x="1272" y="508" class="label" >Canales futuros</text>
+<text x="1272" y="531" class="small" >SMS · push · FTP · …</text>
+<text x="60" y="601" class="small" >Sobre JSON · productor desacoplado</text>
+<text x="710" y="589" class="small">ACK tras entrega o aparcado</text><text x="710" y="611" class="small">en reintentos / fallidos</text>
+<path class="edge" d="M1015 514 V674 H505 V734" stroke="#b66a0c" marker-end="url(#retry)"/>
+<path class="edge" d="M370 774 H332 V260 H505 V274" stroke="#b66a0c" marker-end="url(#retry)" stroke-dasharray="5 6"/>
+<text x="60" y="686" class="" font-size="14" style="fill:#b66a0c" >Retorno al exchange tras TTL</text>
+<text x="710" y="666" class="" font-size="14" style="fill:#b66a0c" >Fallo transitorio · intento N/M</text>
+<path class="edge" d="M1082 514 V698 H925 V734" stroke="#c34a61" marker-end="url(#fail)"/>
+<text x="1100" y="691" class="" font-size="14" style="fill:#c34a61" >Error definitivo</text>
+<path class="edge" d="M1150 514 V654 H1390 V734" stroke="#7c8798" marker-end="url(#logs)" stroke-dasharray="5 6"/>
+<text x="1402" y="692" class="" font-size="14" style="fill:#7c8798" >Logs</text>
+<text x="60" y="755" class="" font-size="12" style="fill:#53647b" font-weight="700" letter-spacing="1.6">RECUPERACIÓN</text>
+<text x="60" y="783" class="" font-size="22" font-weight="600">Fallos visibles.</text>
+<text x="60" y="810" class="small" >Reintentos controlados.</text>
+<rect x="370" y="734" width="290" height="106" rx="12" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)"/>
+<rect x="386" y="753" width="4" height="22" rx="2" fill="#b66a0c" stroke="none" />
+<text x="402" y="768" class="label" >Reintentos con TTL</text>
+<text x="402" y="791" class="small" >notifications.retry.&lt;canal&gt;</text>
+<text x="402" y="816" class="small" >Espera: RETRY_DELAY_MS</text>
+<rect x="710" y="734" width="470" height="106" rx="12" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)"/>
+<rect x="726" y="753" width="4" height="22" rx="2" fill="#c34a61" stroke="none" />
+<text x="742" y="768" class="label" >notifications.dlq · Fallidos</text>
+<text x="742" y="791" class="small" >Contrato inválido o reintentos agotados</text>
+<text x="742" y="816" class="small" >Vía notifications.dlx · Cabeceras de diagnóstico</text>
+<rect x="1240" y="734" width="300" height="106" rx="12" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)" stroke-dasharray="5 5"/>
+<rect x="1256" y="753" width="4" height="22" rx="2" fill="#7c8798" stroke="none" />
+<text x="1272" y="768" class="label" >Elasticsearch</text>
+<text x="1272" y="791" class="small" >Solo logs · opcional</text>
+<path d="M60 881 H1540" stroke="#dce4ef"/>
+<path class="edge" d="M60 916 h36" stroke="#607491" marker-end="url(#main)"/>
+<text x="109" y="921" class="small" >Flujo principal</text>
+<path class="edge" d="M330 916 h36" stroke="#b66a0c" marker-end="url(#retry)" stroke-dasharray="5 6"/>
+<text x="379" y="921" class="small" >Reintento con TTL</text>
+<path class="edge" d="M660 916 h36" stroke="#c34a61" marker-end="url(#fail)"/>
+<text x="709" y="921" class="small" >Fallidos</text>
+<path class="edge" d="M895 916 h36" stroke="#7c8798" marker-end="url(#logs)" stroke-dasharray="5 6"/>
+<text x="944" y="921" class="small" >Logs opcionales</text>
+<text x="1540" y="921" class="" font-size="11" style="fill:#53647b" text-anchor="end">LÍNEA DISCONTINUA: OPCIONAL / DIFERIDO</text>
 </svg>
